@@ -92,10 +92,14 @@ export function PlaylistPlayer() {
         setupMediaSession(event.target);
 
         // Manage silent audio for background keep-alive
-        if (event.data === window.YT.PlayerState.PLAYING) {
+        // Play silent audio during PLAYING and BUFFERING to keep app alive during ads/loading
+        if (event.data === window.YT.PlayerState.PLAYING || event.data === window.YT.PlayerState.BUFFERING) {
             silentAudioRef.current?.play().catch(e => console.log('Silent audio play failed:', e));
         } else {
-            silentAudioRef.current?.pause();
+            // Only pause if explicitly paused or ended
+            if (event.data === window.YT.PlayerState.PAUSED || event.data === window.YT.PlayerState.ENDED) {
+                silentAudioRef.current?.pause();
+            }
         }
     };
 
