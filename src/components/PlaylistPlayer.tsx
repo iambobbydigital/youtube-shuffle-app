@@ -94,6 +94,10 @@ export function PlaylistPlayer() {
             navigator.mediaSession.setActionHandler('pause', () => player.pauseVideo());
             navigator.mediaSession.setActionHandler('previoustrack', () => player.previousVideo());
             navigator.mediaSession.setActionHandler('nexttrack', () => player.nextVideo());
+
+            // Explicitly disable seek handlers to force Next/Prev buttons on iOS
+            navigator.mediaSession.setActionHandler('seekbackward', null);
+            navigator.mediaSession.setActionHandler('seekforward', null);
         }
     };
 
