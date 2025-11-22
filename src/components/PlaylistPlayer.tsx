@@ -1,0 +1,68 @@
+import { useEffect, useRef } from 'react';
+
+declare global {
+    interface Window {
+        onYouTubeIframeAPIReady: () => void;
+        YT: any;
+    }
+}
+
+export function PlaylistPlayer() {
+    const playerRef = useRef<any>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // Check if API is already loaded
+        if (!window.YT) {
+            const tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            const firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+            window.onYouTubeIframeAPIReady = () => {
+                initializePlayer();
+            };
+        } else {
+            initializePlayer();
+        }
+
+        return () => {
+            if (playerRef.current) {
+                playerRef.current.destroy();
+            }
+        }
+    }, []);
+
+    const initializePlayer = () => {
+        if (!containerRef.current) return;
+
+        playerRef.current = new window.YT.Player(containerRef.current, {
+            height: '100%',
+            width: '100%',
+            playerVars: {
+                listType: 'playlist',
+                list: 'PLsN5CCUMECUK_PMx1oAwGoekMnuVwyQA_',
+                autoplay: 1,
+                mute: 0, // Auto-play might require mute on some browsers, but let's try without first
+            },
+            events: {
+                'onReady': onPlayerReady,
+            }
+        });
+    };
+
+    const onPlayerReady = (event: any) => {
+        const player = event.target;
+        player.setShuffle(true);
+        // To ensure shuffle takes effect, we play the first video of the shuffled list
+        // However, playVideoAt(0) plays the first video of the ORIGINAL list if shuffle is not yet active?
+        // Actually, setShuffle(true) shuffles the playlist. playVideoAt(0) plays the first video of the *shuffled* list.
+        player.playVideoAt(0);
+    };
+
+    return (
+        <div className="w-full h-full flex justify-center items-center">
+            <div ref={containerRef} className="w-full h-full aspect-video max-w-4xl max-h-[80vh] rounded-xl overflow-hidden shadow-2xl" />
+        </div>
+    );
+}
