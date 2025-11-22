@@ -8,29 +8,39 @@ declare global {
 }
 
 export function PlaylistPlayer() {
-    const playerRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const playerRef = useRef<any>(null);
+    const silentAudioRef = useRef<HTMLAudioElement | null>(null);
 
     useEffect(() => {
-        // Check if API is already loaded
+        // Initialize silent audio for background keep-alive
+        const silentMp3 = 'data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA/+M4wAAAAAAAAAAAAEluZm8AAAAPAAAAAwAAAbAAqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV1dXV////////////////////////////////////////////AAAAAExhdmM1OC4xMwAAAAAAAAAAAAAAACQDkAAAAAAAAAGw9wrNaQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/+MYxAAAAANIAAAAAExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxDsAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV/+MYxHYAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV';
+        silentAudioRef.current = new Audio(silentMp3);
+        silentAudioRef.current.loop = true;
+        silentAudioRef.current.volume = 0; // Ensure it's silent (though the file is silent too)
+
+        // Load the YouTube IFrame Player API code asynchronously.
         if (!window.YT) {
             const tag = document.createElement('script');
             tag.src = "https://www.youtube.com/iframe_api";
             const firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-
-            window.onYouTubeIframeAPIReady = () => {
-                initializePlayer();
-            };
         } else {
-            initializePlayer();
+            onYouTubeIframeAPIReady();
         }
+
+        // Define the global callback
+        window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
         return () => {
             if (playerRef.current) {
                 playerRef.current.destroy();
             }
-        }
+            if (silentAudioRef.current) {
+                silentAudioRef.current.pause();
+                silentAudioRef.current = null;
+            }
+        };
     }, []);
 
     const initializePlayer = () => {
@@ -75,6 +85,13 @@ export function PlaylistPlayer() {
         // Update metadata and handlers on every state change to ensure persistence
         // This fixes the issue where iOS reverts to default controls after a track change
         setupMediaSession(event.target);
+
+        // Manage silent audio for background keep-alive
+        if (event.data === window.YT.PlayerState.PLAYING) {
+            silentAudioRef.current?.play().catch(e => console.log('Silent audio play failed:', e));
+        } else {
+            silentAudioRef.current?.pause();
+        }
     };
 
     const setupMediaSession = (player: any) => {
