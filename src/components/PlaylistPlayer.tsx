@@ -43,7 +43,8 @@ export function PlaylistPlayer() {
                 listType: 'playlist',
                 list: 'PLsN5CCUMECUK_PMx1oAwGoekMnuVwyQA_',
                 autoplay: 1,
-                mute: 0, // Auto-play might require mute on some browsers, but let's try without first
+                mute: 0,
+                playsinline: 1,
             },
             events: {
                 'onReady': onPlayerReady,
