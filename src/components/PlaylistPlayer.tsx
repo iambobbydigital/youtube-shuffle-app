@@ -55,10 +55,17 @@ export function PlaylistPlayer() {
     const onPlayerReady = (event: any) => {
         const player = event.target;
         player.setShuffle(true);
-        // To ensure shuffle takes effect, we play the first video of the shuffled list
-        // However, playVideoAt(0) plays the first video of the ORIGINAL list if shuffle is not yet active?
-        // Actually, setShuffle(true) shuffles the playlist. playVideoAt(0) plays the first video of the *shuffled* list.
         player.playVideoAt(0);
+
+        // Explicitly set allow attribute to enable PiP
+        const iframe = player.getIframe();
+        if (iframe) {
+            let allow = iframe.getAttribute('allow') || '';
+            if (!allow.includes('picture-in-picture')) {
+                allow += '; picture-in-picture';
+                iframe.setAttribute('allow', allow);
+            }
+        }
     };
 
     return (
