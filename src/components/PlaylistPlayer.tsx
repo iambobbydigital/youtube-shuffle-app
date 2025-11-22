@@ -19,18 +19,23 @@ export function PlaylistPlayer() {
         silentAudioRef.current.loop = true;
         silentAudioRef.current.volume = 0; // Ensure it's silent (though the file is silent too)
 
+        // Define the initialization function
+        const onYouTubeIframeAPIReady = () => {
+            initializePlayer();
+        };
+
         // Load the YouTube IFrame Player API code asynchronously.
         if (!window.YT) {
             const tag = document.createElement('script');
             tag.src = "https://www.youtube.com/iframe_api";
             const firstScriptTag = document.getElementsByTagName('script')[0];
             firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+            // Assign global callback
+            window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
         } else {
             onYouTubeIframeAPIReady();
         }
-
-        // Define the global callback
-        window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 
         return () => {
             if (playerRef.current) {
