@@ -48,6 +48,7 @@ export function PlaylistPlayer() {
             },
             events: {
                 'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange,
             }
         });
     };
@@ -65,6 +66,34 @@ export function PlaylistPlayer() {
                 allow += '; picture-in-picture';
                 iframe.setAttribute('allow', allow);
             }
+        }
+
+        setupMediaSession(player);
+    };
+
+    const onPlayerStateChange = (event: any) => {
+        // Update metadata when video changes or state changes
+        if (event.data === window.YT.PlayerState.PLAYING) {
+            setupMediaSession(event.target);
+        }
+    };
+
+    const setupMediaSession = (player: any) => {
+        if ('mediaSession' in navigator) {
+            const videoData = player.getVideoData();
+
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: videoData.title || 'Focus Music',
+                artist: videoData.author || 'YouTube Shuffle',
+                artwork: [
+                    { src: '/brain-icon-processed.png', sizes: '512x512', type: 'image/png' }
+                ]
+            });
+
+            navigator.mediaSession.setActionHandler('play', () => player.playVideo());
+            navigator.mediaSession.setActionHandler('pause', () => player.pauseVideo());
+            navigator.mediaSession.setActionHandler('previoustrack', () => player.previousVideo());
+            navigator.mediaSession.setActionHandler('nexttrack', () => player.nextVideo());
         }
     };
 
