@@ -72,15 +72,15 @@ export function PlaylistPlayer() {
     };
 
     const onPlayerStateChange = (event: any) => {
-        // Update metadata when video changes or state changes
-        if (event.data === window.YT.PlayerState.PLAYING) {
-            setupMediaSession(event.target);
-        }
+        // Update metadata and handlers on every state change to ensure persistence
+        // This fixes the issue where iOS reverts to default controls after a track change
+        setupMediaSession(event.target);
     };
 
     const setupMediaSession = (player: any) => {
         if ('mediaSession' in navigator) {
             const videoData = player.getVideoData();
+            const playerState = player.getPlayerState();
 
             navigator.mediaSession.metadata = new MediaMetadata({
                 title: videoData.title || 'Focus Music',
@@ -90,12 +90,20 @@ export function PlaylistPlayer() {
                 ]
             });
 
+            // Update playback state to help iOS know we are active
+            if (playerState === window.YT.PlayerState.PLAYING) {
+                navigator.mediaSession.playbackState = 'playing';
+            } else {
+                navigator.mediaSession.playbackState = 'paused';
+            }
+
             navigator.mediaSession.setActionHandler('play', () => player.playVideo());
             navigator.mediaSession.setActionHandler('pause', () => player.pauseVideo());
             navigator.mediaSession.setActionHandler('previoustrack', () => player.previousVideo());
             navigator.mediaSession.setActionHandler('nexttrack', () => player.nextVideo());
 
             // Explicitly disable seek handlers to force Next/Prev buttons on iOS
+            // Re-applying this on every state change is crucial for persistence
             navigator.mediaSession.setActionHandler('seekbackward', null);
             navigator.mediaSession.setActionHandler('seekforward', null);
         }
